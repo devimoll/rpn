@@ -1,3 +1,5 @@
 /*.pro.user
 /Qt*
 qt_build_*
+/debug
+/release

@@ -142,18 +142,43 @@ void rpn::input_changed()
                 input->setText("");
                 return;
             }
-            else if (s == "dec") {
+            // dec dato 16sinsuuno suuji dakara 16sinsuu kara kirikaerarenai.
+            else if (s == "deci") {
                 base = 10;
                 input->setText("");
                 return;
             }
             else if (s == "hex") {
+                int base_old = base;
+                bool okok;
                 base = 16;
+                QString str("");
                 /* listを1個ずつ読む
                  * 数値なら前のbaseで変数にtointしてqstring::numberで新たなbaseを指定してテキストボックスに追加
                  * 演算子ならそのままテキストボックスに追加
                  * 之で良い気がする*/
-                input->setText("");
+                for (int i = 0; i < l.size() - 1; i++) {
+                    if (base_old == 10) {
+                        x = l[i].toDouble(&okok);
+                    }
+                    else {
+                        x = l[i].toInt(&okok, base_old);
+                    }
+                    if (okok) {
+                        if (base == 10) {
+                            str += QString::number(x);
+                        }
+                        else {
+                            str += QString::number((int)x, base);
+                        }
+                    }
+                    else {
+                        str += l[i];
+                    }
+                    str += " ";
+                }
+
+                input->setText(str);
                 return;
             }
             else if (s == "help" || s == "hh") {
