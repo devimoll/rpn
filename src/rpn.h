@@ -30,6 +30,8 @@ private:
     double pop();
     void push(double);
     bool set(int);
+    void set_input_box_text(QString);
+    void convert_base(int, int, const QStringList&);
     void input_changed();
 };
 #endif // RPN_H

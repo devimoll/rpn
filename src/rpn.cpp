@@ -50,6 +50,44 @@ bool rpn::set(int n) {
     return true;
 }
 
+// カーソル位置を保持したままテキストボックスに書き込む
+void rpn::set_input_box_text(QString str) {
+    QTextCursor tc = input->textCursor();
+    // よくわからないが1を引かないとエラーが出る
+    tc.setPosition(input->document()->characterCount() - 1);
+    input->setText(str);
+    input->setTextCursor(tc);
+}
+
+void rpn::convert_base(int base_old, int base, const QStringList &elements)
+{
+    double x;
+    bool is_number;
+    QString exprs = "";
+    // 進数指定命令は不要だから-1
+    for (int i = 0; i < elements.size() - 1; i++) {
+        if (base_old == 10) {
+            x = elements[i].toDouble(&is_number);
+        }
+        else {
+            x = elements[i].toInt(&is_number, base_old);
+        }
+        if (is_number) {
+            if (base == 10) {
+                exprs += QString::number(x);
+            }
+            else {
+                exprs += QString::number((int)x, base);
+            }
+        }
+        else {
+            exprs += elements[i];
+        }
+        exprs += " ";
+    }
+    set_input_box_text(exprs);
+}
+
 void rpn::input_changed()
 {
     stack.clear();
@@ -133,64 +171,37 @@ void rpn::input_changed()
                 push(time(NULL));
             }
             else if (e == "bin") {
+                int base_old = base;
                 base = 2;
-                input->setText("");
+                convert_base(base_old, base, elements);
                 return;
             }
             else if (e == "oct") {
+                int base_old = base;
                 base = 8;
-                input->setText("");
+                convert_base(base_old, base, elements);
                 return;
             }
-            // dec dato 16sinsuuno suuji dakara 16sinsuu kara kirikaerarenai.
+            // decだと16進数の数字と判断されてしまい16進数モードから切り替えられない
             else if (e == "deci") {
+                int base_old = base;
                 base = 10;
-                input->setText("");
+                convert_base(base_old, base, elements);
                 return;
             }
             else if (e == "hex") {
                 int base_old = base;
                 base = 16;
-                exprs = "";
-                /* listを1個ずつ読む
-                 * 数値なら前のbaseで変数にtointしてqstring::numberで新たなbaseを指定してテキストボックスに追加
-                 * 演算子ならそのままテキストボックスに追加
-                 * 之で良い気がする*/
-                for (int i = 0; i < elements.size() - 1; i++) {
-                    if (base_old == 10) {
-                        x = elements[i].toDouble(&is_number);
-                    }
-                    else {
-                        x = elements[i].toInt(&is_number, base_old);
-                    }
-                    if (is_number) {
-                        if (base == 10) {
-                            exprs += QString::number(x);
-                        }
-                        else {
-                            exprs += QString::number((int)x, base);
-                        }
-                    }
-                    else {
-                        exprs += elements[i];
-                    }
-                    exprs += " ";
-                }
-
-                input->setText(exprs);
+                convert_base(base_old, base, elements);
                 return;
             }
             else if (e == "help" || e == "hh") {
                 exprs.remove("help");
                 exprs.remove("hh");
-                qDebug() << "help";
-                QTextCursor tc = input->textCursor();
-                // よくわからないが1を引かないとエラーが出る
-                tc.setPosition(input->document()->characterCount() - 1);
-                input->setText(exprs);
-                // この行はinput->setText(input_text);より下に無いとinvaliedで上書きされる
-                result->setText("+, -, *, /, sqrt, ln");
-                input->setTextCursor(tc);
+                QString help = "+, -, *, /, sqrt, ln";
+                set_input_box_text(exprs);
+                // この行はset_input_box_text()内のinput->setText(input_text);より下に無いとinvaliedで上書きされる
+                result->setText(help);
                 // このreturnがないとinvalidで上書きされる
                 return;
             }
